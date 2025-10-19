@@ -43,7 +43,7 @@ export const useUserStore = defineStore('user', () => {
 
   const hasCompleteProfile = computed(() => {
     if (!currentUser.value) return false
-    return !!(currentUser.value.name && currentUser.value.email && currentUser.value.address)
+    return !!(currentUser.value.name && currentUser.value.email && currentUser.value.address && currentUser.value.phone)
   })
 
   return {

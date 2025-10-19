@@ -11,7 +11,7 @@
         
         <form @submit.prevent="handleSubmit" class="profile-form">
           <div class="form-group">
-            <label for="name" class="form-label">Full Name *</label>
+            <label for="name" class="form-label">Full Name</label>
             <input
               id="name"
               v-model="formData.name"
@@ -23,7 +23,7 @@
           </div>
           
           <div class="form-group">
-            <label for="email" class="form-label">Email Address *</label>
+            <label for="email" class="form-label">Email Address</label>
             <input
               id="email"
               v-model="formData.email"
@@ -35,7 +35,7 @@
           </div>
           
           <div class="form-group">
-            <label for="address" class="form-label">Address *</label>
+            <label for="address" class="form-label">Address</label>
             <textarea
               id="address"
               v-model="formData.address"
@@ -46,13 +46,14 @@
           </div>
           
           <div class="form-group">
-            <label for="phone" class="form-label">Phone Number (Optional)</label>
+            <label for="phone" class="form-label">Phone Number</label>
             <input
               id="phone"
               v-model="formData.phone"
               type="tel"
               class="form-input"
               placeholder="Your phone number"
+              required
             />
           </div>
           
@@ -91,6 +92,32 @@
             </div>
           </div>
         </div>
+        
+        <div v-if="userStore.isLoggedIn && requestedListings.length > 0" class="my-bookings-section">
+          <h3>My Bookings</h3>
+          <div class="listings-grid grid grid-2">
+            <div 
+              v-for="listing in requestedListings" 
+              :key="listing.id" 
+              class="booking-card"
+            >
+              <div class="booking-image">
+                <img :src="listing.imageUrl" :alt="listing.title" />
+                <div class="status-badge" :class="getStatusClass(listing.status)">
+                  {{ getStatusText(listing.status) }}
+                </div>
+              </div>
+              <div class="booking-content">
+                <h4>{{ listing.title }}</h4>
+                <div class="category-tag" :style="{ borderColor: getCategoryColor(listing.categoryId), color: getCategoryColor(listing.categoryId) }">
+                  {{ getCategoryName(listing.categoryId) }}
+                </div>
+                <p class="booking-address">📍 {{ getUserAddress(listing.userId) }}</p>
+                <p class="booking-date">📅 {{ formatDate(listing.createdAt) }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -101,10 +128,13 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useListingsStore } from '@/stores/listings'
+import { useCategoriesStore } from '@/stores/categories'
+import { sampleUsers } from '@/stores/sample-data'
 
 const router = useRouter()
 const userStore = useUserStore()
 const listingsStore = useListingsStore()
+const categoriesStore = useCategoriesStore()
 
 const isSubmitting = ref(false)
 const error = ref('')
@@ -121,13 +151,53 @@ const myListings = computed(() => listingsStore.myListings)
 const requestedListings = computed(() => listingsStore.requestedListings)
 
 const givenAwayCount = computed(() => {
-  return myListings.value.filter(listing => listing.status === 'given').length
+  return myListings.value.filter(listing => listing.status === 'taken').length
 })
+
+const getUserAddress = (userId: string) => {
+  const user = sampleUsers.find(u => u.id === userId)
+  return user?.address || 'Address not available'
+}
+
+const getStatusClass = (status: string) => {
+  switch (status) {
+    case 'available': return 'status-available'
+    case 'booked': return 'status-booked'
+    case 'taken': return 'status-taken'
+    default: return 'status-available'
+  }
+}
+
+const getStatusText = (status: string) => {
+  switch (status) {
+    case 'available': return 'Available'
+    case 'booked': return 'Booked'
+    case 'taken': return 'Taken'
+    default: return 'Available'
+  }
+}
+
+const formatDate = (date: Date) => {
+  return new Date(date).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  })
+}
+
+const getCategoryName = (categoryId: string) => {
+  return categoriesStore.getCategoryName(categoryId)
+}
+
+const getCategoryColor = (categoryId: string) => {
+  return categoriesStore.getCategoryColor(categoryId)
+}
 
 const isFormValid = computed(() => {
   return formData.value.name.trim() &&
          formData.value.email.trim() &&
-         formData.value.address.trim()
+         formData.value.address.trim() &&
+         formData.value.phone.trim()
 })
 
 const handleSubmit = async () => {
@@ -142,7 +212,7 @@ const handleSubmit = async () => {
       name: formData.value.name.trim(),
       email: formData.value.email.trim(),
       address: formData.value.address.trim(),
-      phone: formData.value.phone.trim() || undefined
+      phone: formData.value.phone.trim()
     }
 
     await userStore.updateUser(updateData)
@@ -161,6 +231,7 @@ const handleSubmit = async () => {
 }
 
 onMounted(() => {
+  categoriesStore.initializeCategories()
   listingsStore.initializeListings()
   
   // Pre-fill form with existing user data
@@ -169,7 +240,7 @@ onMounted(() => {
       name: userStore.currentUser.name,
       email: userStore.currentUser.email,
       address: userStore.currentUser.address,
-      phone: userStore.currentUser.phone || ''
+      phone: userStore.currentUser.phone
     }
   }
 })
@@ -220,12 +291,15 @@ onMounted(() => {
   min-width: 120px;
 }
 
-.profile-stats {
+.profile-stats,
+.my-bookings-section {
   border-top: 1px solid #e5e7eb;
   padding-top: 2rem;
+  margin-top: 2rem;
 }
 
-.profile-stats h3 {
+.profile-stats h3,
+.my-bookings-section h3 {
   font-size: 1.5rem;
   font-weight: 600;
   margin-bottom: 1.5rem;
@@ -281,5 +355,96 @@ onMounted(() => {
   .stats-grid {
     grid-template-columns: 1fr;
   }
+}
+
+.booking-card {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+}
+
+.booking-image {
+  position: relative;
+  height: 150px;
+  overflow: hidden;
+}
+
+.booking-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.status-badge {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.status-available {
+  background-color: #10b981;
+  color: white;
+}
+
+.status-booked {
+  background-color: #f59e0b;
+  color: white;
+}
+
+.status-taken {
+  background-color: #6b7280;
+  color: white;
+}
+
+.booking-content {
+  padding: 1rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.booking-content h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #1f2937;
+}
+
+.booking-address,
+.booking-date {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-bottom: 0.25rem;
+}
+
+.category-tag {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border: 1px solid;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+  align-self: flex-start;
+}
+
+.listings-grid {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.grid.grid-2 {
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
 }
 </style>

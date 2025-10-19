@@ -35,16 +35,37 @@
           </div>
           
           <div class="form-group">
-            <label for="address" class="form-label">Collection Address *</label>
-            <input
-              id="address"
-              v-model="formData.address"
-              type="text"
-              class="form-input"
-              placeholder="Where can people collect this item?"
-              required
-            />
+            <label for="category" class="form-label">Category *</label>
+            <div class="category-selector">
+              <select
+                id="category"
+                v-model="formData.categoryId"
+                class="form-select"
+                required
+                @change="handleCategoryChange"
+              >
+                <option value="">Select or add a category</option>
+                <option 
+                  v-for="category in categories" 
+                  :key="category.id" 
+                  :value="category.id"
+                >
+                  {{ category.name }}
+                </option>
+                <option value="new">+ Add new category</option>
+              </select>
+              <input
+                v-if="showNewCategoryInput"
+                v-model="newCategoryName"
+                type="text"
+                class="form-input new-category-input"
+                placeholder="Enter new category name"
+                @keyup.enter="addNewCategory"
+                @blur="addNewCategory"
+              />
+            </div>
           </div>
+          
           
           <div v-if="error" class="alert alert-error">
             {{ error }}
@@ -69,30 +90,36 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useListingsStore } from '@/stores/listings'
 import { useUserStore } from '@/stores/user'
+import { useCategoriesStore } from '@/stores/categories'
 import PhotoUpload from '@/components/PhotoUpload.vue'
 
 const router = useRouter()
 const listingsStore = useListingsStore()
 const userStore = useUserStore()
+const categoriesStore = useCategoriesStore()
 
 const isSubmitting = ref(false)
 const error = ref('')
+const showNewCategoryInput = ref(false)
+const newCategoryName = ref('')
 
 const formData = ref({
   title: '',
   description: '',
-  address: '',
+  categoryId: '',
   imageFile: null as File | null
 })
+
+const categories = computed(() => categoriesStore.categories)
 
 const isFormValid = computed(() => {
   return formData.value.title.trim() &&
          formData.value.description.trim() &&
-         formData.value.address.trim() &&
+         formData.value.categoryId &&
          formData.value.imageFile
 })
 
@@ -113,7 +140,7 @@ const handleSubmit = async () => {
     const listingData = {
       title: formData.value.title.trim(),
       description: formData.value.description.trim(),
-      address: formData.value.address.trim(),
+      categoryId: formData.value.categoryId,
       imageUrl
     }
 
@@ -123,7 +150,7 @@ const handleSubmit = async () => {
     formData.value = {
       title: '',
       description: '',
-      address: '',
+      categoryId: '',
       imageFile: null
     }
 
@@ -136,6 +163,35 @@ const handleSubmit = async () => {
     isSubmitting.value = false
   }
 }
+
+const handleCategoryChange = () => {
+  if (formData.value.categoryId === 'new') {
+    showNewCategoryInput.value = true
+    formData.value.categoryId = ''
+  } else {
+    showNewCategoryInput.value = false
+  }
+}
+
+const addNewCategory = async () => {
+  if (!newCategoryName.value.trim()) {
+    showNewCategoryInput.value = false
+    return
+  }
+
+  try {
+    const newCategory = await categoriesStore.addCategory(newCategoryName.value.trim())
+    formData.value.categoryId = newCategory.id
+    showNewCategoryInput.value = false
+    newCategoryName.value = ''
+  } catch (error) {
+    console.error('Error adding new category:', error)
+  }
+}
+
+onMounted(() => {
+  categoriesStore.initializeCategories()
+})
 </script>
 
 <style scoped>
@@ -200,5 +256,30 @@ const handleSubmit = async () => {
   .form-actions .btn {
     width: 100%;
   }
+}
+
+.category-selector {
+  position: relative;
+}
+
+.form-select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  background-color: white;
+  font-size: 1rem;
+  color: #374151;
+}
+
+.form-select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.new-category-input {
+  margin-top: 0.5rem;
+  width: 100%;
 }
 </style>

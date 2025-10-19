@@ -3,7 +3,7 @@
     <nav class="navbar">
       <div class="nav-container">
         <router-link to="/" class="nav-brand">
-          <h1>🎁 Giveaway App</h1>
+          <h1>Away 2 Give</h1>
         </router-link>
         <div class="nav-links">
           <router-link to="/" class="nav-link">Home</router-link>

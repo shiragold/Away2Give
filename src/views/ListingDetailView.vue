@@ -33,7 +33,7 @@
             <div class="detail-info">
               <div class="info-item">
                 <h4>📍 Collection Address</h4>
-                <p>{{ listing.address }}</p>
+                <p>{{ userAddress }}</p>
               </div>
               
               <div class="info-item">
@@ -41,7 +41,7 @@
                 <p>{{ formatDate(listing.createdAt) }}</p>
               </div>
               
-              <div v-if="listing.status === 'requested'" class="info-item">
+              <div v-if="listing.status === 'booked'" class="info-item">
                 <h4>🔄 Last Updated</h4>
                 <p>{{ formatDate(listing.updatedAt) }}</p>
               </div>
@@ -58,12 +58,12 @@
               </button>
               
               <button 
-                v-if="canMarkAsGiven && listing.status === 'requested'"
+                v-if="canMarkAsGiven && listing.status === 'booked'"
                 @click="handleMarkAsGiven"
                 class="btn btn-secondary btn-large"
                 :disabled="isMarkingAsGiven"
               >
-                {{ isMarkingAsGiven ? 'Updating...' : 'Mark as Given Away' }}
+                {{ isMarkingAsGiven ? 'Updating...' : 'Mark as Taken' }}
               </button>
               
               <router-link to="/" class="btn btn-outline">
@@ -83,6 +83,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useListingsStore } from '@/stores/listings'
 import { useUserStore } from '@/stores/user'
 import type { Listing } from '@/types'
+import { sampleUsers } from '@/stores/sample-data'
 
 const route = useRoute()
 const router = useRouter()
@@ -98,12 +99,18 @@ const listing = computed(() => {
   return listingsStore.getListingById(id)
 })
 
+const userAddress = computed(() => {
+  if (!listing.value) return 'Address not available'
+  const user = sampleUsers.find(u => u.id === listing.value!.userId)
+  return user?.address || 'Address not available'
+})
+
 const statusClass = computed(() => {
   if (!listing.value) return ''
   switch (listing.value.status) {
     case 'available': return 'status-available'
-    case 'requested': return 'status-requested'
-    case 'given': return 'status-given'
+    case 'booked': return 'status-booked'
+    case 'taken': return 'status-taken'
     default: return 'status-available'
   }
 })
@@ -112,8 +119,8 @@ const statusText = computed(() => {
   if (!listing.value) return ''
   switch (listing.value.status) {
     case 'available': return 'Available'
-    case 'requested': return 'Requested'
-    case 'given': return 'Given Away'
+    case 'booked': return 'Booked'
+    case 'taken': return 'Taken'
     default: return 'Available'
   }
 })
@@ -127,7 +134,7 @@ const canRequest = computed(() => {
 const canMarkAsGiven = computed(() => {
   if (!listing.value || !userStore.isLoggedIn) return false
   return listing.value.userId === userStore.currentUser?.id &&
-         listing.value.status === 'requested'
+         listing.value.status === 'booked'
 })
 
 const formatDate = (date: Date) => {
@@ -254,12 +261,12 @@ onMounted(() => {
   color: white;
 }
 
-.status-requested {
+.status-booked {
   background-color: #f59e0b;
   color: white;
 }
 
-.status-given {
+.status-taken {
   background-color: #6b7280;
   color: white;
 }

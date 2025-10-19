@@ -2,11 +2,28 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { Listing, CreateListingData } from '@/types'
 import { useUserStore } from './user'
-import { sampleListings } from './sample-data'
+import { sampleListings, sampleUsers } from './sample-data'
 
 export const useListingsStore = defineStore('listings', () => {
   const listings = ref<Listing[]>([])
   const userStore = useUserStore()
+
+  // Search state
+  const searchFilters = ref({
+    categoryId: '',
+    publisherId: '',
+    city: '',
+    status: '',
+    searchText: ''
+  })
+
+  const allListings = computed(() => {
+    // Sort by relevancy: available first, then booked, then taken
+    return [...listings.value].sort((a, b) => {
+      const statusOrder = { 'available': 0, 'booked': 1, 'taken': 2 }
+      return statusOrder[a.status] - statusOrder[b.status]
+    })
+  })
 
   const availableListings = computed(() => 
     listings.value.filter(listing => listing.status === 'available')
@@ -20,6 +37,48 @@ export const useListingsStore = defineStore('listings', () => {
   const requestedListings = computed(() => {
     if (!userStore.currentUser) return []
     return listings.value.filter(listing => listing.requestedBy === userStore.currentUser!.id)
+  })
+
+  const filteredListings = computed(() => {
+    let filtered = [...listings.value]
+
+    // Filter by category
+    if (searchFilters.value.categoryId) {
+      filtered = filtered.filter(listing => listing.categoryId === searchFilters.value.categoryId)
+    }
+
+    // Filter by publisher
+    if (searchFilters.value.publisherId) {
+      filtered = filtered.filter(listing => listing.userId === searchFilters.value.publisherId)
+    }
+
+    // Filter by city
+    if (searchFilters.value.city) {
+      filtered = filtered.filter(listing => {
+        const user = sampleUsers.find(u => u.id === listing.userId)
+        return user?.address.toLowerCase().includes(searchFilters.value.city.toLowerCase())
+      })
+    }
+
+    // Filter by status
+    if (searchFilters.value.status) {
+      filtered = filtered.filter(listing => listing.status === searchFilters.value.status)
+    }
+
+    // Filter by search text
+    if (searchFilters.value.searchText) {
+      const searchLower = searchFilters.value.searchText.toLowerCase()
+      filtered = filtered.filter(listing => 
+        listing.title.toLowerCase().includes(searchLower) ||
+        listing.description.toLowerCase().includes(searchLower)
+      )
+    }
+
+    // Sort by relevancy: available first, then booked, then taken
+    return filtered.sort((a, b) => {
+      const statusOrder = { 'available': 0, 'booked': 1, 'taken': 2 }
+      return statusOrder[a.status] - statusOrder[b.status]
+    })
   })
 
   const addListing = (listingData: CreateListingData) => {
@@ -55,7 +114,7 @@ export const useListingsStore = defineStore('listings', () => {
       throw new Error('Listing is not available')
     }
 
-    listing.status = 'requested'
+    listing.status = 'booked'
     listing.requestedBy = userStore.currentUser.id
     listing.updatedAt = new Date()
     
@@ -77,7 +136,7 @@ export const useListingsStore = defineStore('listings', () => {
       throw new Error('Only the listing owner can mark it as given')
     }
 
-    listing.status = 'given'
+    listing.status = 'taken'
     listing.updatedAt = new Date()
     
     saveListings()
@@ -118,15 +177,88 @@ export const useListingsStore = defineStore('listings', () => {
     loadListings()
   }
 
+  // Helper functions for search filters
+  const getUniquePublishers = computed(() => {
+    const publisherIds = new Set(listings.value.map(listing => listing.userId))
+    return Array.from(publisherIds).map(userId => {
+      const user = sampleUsers.find(u => u.id === userId)
+      return {
+        id: userId,
+        name: user?.name || 'Unknown User'
+      }
+    }).sort((a, b) => a.name.localeCompare(b.name))
+  })
+
+  const getUniqueCities = computed(() => {
+    const cities = new Set<string>()
+    sampleUsers.forEach(user => {
+      // Extract city from address (assuming format like "Street, City" or "City, Country")
+      const addressParts = user.address.split(',')
+      if (addressParts.length >= 2) {
+        const city = addressParts[addressParts.length - 1].trim()
+        if (city) cities.add(city)
+      }
+    })
+    return Array.from(cities).sort()
+  })
+
+  const getStatusOptions = computed(() => [
+    { value: 'available', label: 'Available' },
+    { value: 'booked', label: 'Booked' },
+    { value: 'taken', label: 'Taken' }
+  ])
+
+  // Search management functions
+  const updateSearchFilter = (key: keyof typeof searchFilters.value, value: string) => {
+    searchFilters.value[key] = value
+    saveSearchFilters()
+  }
+
+  const clearSearchFilters = () => {
+    searchFilters.value = {
+      categoryId: '',
+      publisherId: '',
+      city: '',
+      status: '',
+      searchText: ''
+    }
+    saveSearchFilters()
+  }
+
+  const saveSearchFilters = () => {
+    localStorage.setItem('giveaway-search-filters', JSON.stringify(searchFilters.value))
+  }
+
+  const loadSearchFilters = () => {
+    const saved = localStorage.getItem('giveaway-search-filters')
+    if (saved) {
+      try {
+        searchFilters.value = JSON.parse(saved)
+      } catch (error) {
+        console.error('Error parsing saved search filters:', error)
+        localStorage.removeItem('giveaway-search-filters')
+      }
+    }
+  }
+
   return {
     listings,
+    allListings,
     availableListings,
     myListings,
     requestedListings,
+    filteredListings,
+    searchFilters,
+    getUniquePublishers,
+    getUniqueCities,
+    getStatusOptions,
     addListing,
     requestListing,
     markAsGiven,
     getListingById,
+    updateSearchFilter,
+    clearSearchFilters,
+    loadSearchFilters,
     initializeListings
   }
 })

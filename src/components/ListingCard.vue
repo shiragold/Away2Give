@@ -8,18 +8,19 @@
     </div>
     <div class="listing-content">
       <h3 class="listing-title">{{ listing.title }}</h3>
-      <p class="listing-description">{{ listing.description }}</p>
       <div class="listing-meta">
-        <p class="listing-address">📍 {{ listing.address }}</p>
-        <p class="listing-date">{{ formatDate(listing.createdAt) }}</p>
+        <p class="listing-address">📍 {{ userAddress }}</p>
+        <div class="category-tag" :style="{ borderColor: categoryColor, color: categoryColor }">
+          {{ categoryName }}
+        </div>
       </div>
       <div class="listing-actions">
-        <router-link 
-          :to="{ name: 'listing-detail', params: { id: listing.id } }" 
+        <button 
+          @click="openDialog"
           class="btn btn-primary"
         >
           View Details
-        </router-link>
+        </button>
         <button 
           v-if="listing.status === 'available' && canRequest"
           @click="handleRequest"
@@ -29,12 +30,12 @@
           {{ isRequesting ? 'Requesting...' : 'Request Item' }}
         </button>
         <button 
-          v-if="canMarkAsGiven && listing.status === 'requested'"
+          v-if="canMarkAsGiven && listing.status === 'booked'"
           @click="handleMarkAsGiven"
           class="btn btn-secondary"
           :disabled="isMarkingAsGiven"
         >
-          {{ isMarkingAsGiven ? 'Updating...' : 'Mark as Given' }}
+          {{ isMarkingAsGiven ? 'Updating...' : 'Mark as Taken' }}
         </button>
       </div>
     </div>
@@ -46,25 +47,49 @@ import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useListingsStore } from '@/stores/listings'
 import { useUserStore } from '@/stores/user'
+import { useCategoriesStore } from '@/stores/categories'
 import type { Listing } from '@/types'
+import { sampleUsers } from '@/stores/sample-data'
 
 interface Props {
   listing: Listing
 }
 
 const props = defineProps<Props>()
+const emit = defineEmits<{
+  openDialog: [listing: Listing]
+}>()
+
 const router = useRouter()
 const listingsStore = useListingsStore()
 const userStore = useUserStore()
+const categoriesStore = useCategoriesStore()
 
 const isRequesting = ref(false)
 const isMarkingAsGiven = ref(false)
 
+const userAddress = computed(() => {
+  const user = sampleUsers.find(u => u.id === props.listing.userId)
+  return user?.address || 'Address not available'
+})
+
+const category = computed(() => {
+  return categoriesStore.getCategoryById(props.listing.categoryId)
+})
+
+const categoryName = computed(() => {
+  return category.value?.name || 'Uncategorized'
+})
+
+const categoryColor = computed(() => {
+  return category.value?.color || '#6B7280'
+})
+
 const statusClass = computed(() => {
   switch (props.listing.status) {
     case 'available': return 'status-available'
-    case 'requested': return 'status-requested'
-    case 'given': return 'status-given'
+    case 'booked': return 'status-booked'
+    case 'taken': return 'status-taken'
     default: return 'status-available'
   }
 })
@@ -72,8 +97,8 @@ const statusClass = computed(() => {
 const statusText = computed(() => {
   switch (props.listing.status) {
     case 'available': return 'Available'
-    case 'requested': return 'Requested'
-    case 'given': return 'Given Away'
+    case 'booked': return 'Booked'
+    case 'taken': return 'Taken'
     default: return 'Available'
   }
 })
@@ -123,6 +148,10 @@ const handleMarkAsGiven = async () => {
     isMarkingAsGiven.value = false
   }
 }
+
+const openDialog = () => {
+  emit('openDialog', props.listing)
+}
 </script>
 
 <style scoped>
@@ -161,12 +190,12 @@ const handleMarkAsGiven = async () => {
   color: white;
 }
 
-.status-requested {
+.status-booked {
   background-color: #f59e0b;
   color: white;
 }
 
-.status-given {
+.status-taken {
   background-color: #6b7280;
   color: white;
 }
@@ -183,6 +212,9 @@ const handleMarkAsGiven = async () => {
   font-weight: 600;
   margin-bottom: 0.5rem;
   color: #1f2937;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .listing-description {
@@ -203,6 +235,9 @@ const handleMarkAsGiven = async () => {
   font-size: 0.875rem;
   color: #374151;
   margin-bottom: 0.25rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .listing-date {
@@ -219,5 +254,17 @@ const handleMarkAsGiven = async () => {
 .listing-actions .btn {
   flex: 1;
   min-width: 120px;
+}
+
+.category-tag {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border: 1px solid;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 0.5rem;
 }
 </style>
