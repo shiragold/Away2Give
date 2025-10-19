@@ -2,7 +2,7 @@
   <div class="home-view">
     <div class="container">
       <div class="hero-section">
-        <h1>🎁 Give Away, Give Back</h1>
+        <h1>Give Away, Give Back</h1>
         <p>Connect with your community by giving away items you no longer need and finding treasures from others.</p>
         <div class="hero-actions">
           <router-link v-if="userStore.isLoggedIn" to="/add-listing" class="btn btn-primary">
@@ -29,21 +29,30 @@
         </div>
       </div>
 
+      <!-- Search Panel -->
+      <SearchPanel />
+
       <div class="listings-section">
-        <h2>Available Items</h2>
-        <div v-if="availableListings.length === 0" class="empty-state">
+        <h2>All Items</h2>
+        <div v-if="filteredListings.length === 0" class="empty-state">
           <div class="empty-icon">📦</div>
-          <h3>No items available right now</h3>
-          <p>Be the first to add a listing!</p>
-          <router-link v-if="userStore.isLoggedIn" to="/add-listing" class="btn btn-primary">
-            Add Listing
-          </router-link>
+          <h3>No items found</h3>
+          <p>Try adjusting your search filters or be the first to add a listing!</p>
+          <div class="empty-actions">
+            <button @click="clearAllFilters" class="btn btn-outline">
+              Clear Filters
+            </button>
+            <router-link v-if="userStore.isLoggedIn" to="/add-listing" class="btn btn-primary">
+              Add Listing
+            </router-link>
+          </div>
         </div>
         <div v-else class="listings-grid grid grid-3">
           <ListingCard 
-            v-for="listing in availableListings" 
+            v-for="listing in filteredListings" 
             :key="listing.id" 
-            :listing="listing" 
+            :listing="listing"
+            @open-dialog="openListingDialog"
           />
         </div>
       </div>
@@ -54,29 +63,63 @@
           <ListingCard 
             v-for="listing in myListings" 
             :key="listing.id" 
-            :listing="listing" 
+            :listing="listing"
+            @open-dialog="openListingDialog"
           />
         </div>
       </div>
     </div>
+    
+    <!-- Listing Dialog -->
+    <ListingDialog 
+      :is-open="isDialogOpen"
+      :listing="selectedListing"
+      @close="closeListingDialog"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useListingsStore } from '@/stores/listings'
 import { useUserStore } from '@/stores/user'
+import { useCategoriesStore } from '@/stores/categories'
 import ListingCard from '@/components/ListingCard.vue'
+import ListingDialog from '@/components/ListingDialog.vue'
+import SearchPanel from '@/components/SearchPanel.vue'
+import type { Listing } from '@/types'
 
 const listingsStore = useListingsStore()
 const userStore = useUserStore()
+const categoriesStore = useCategoriesStore()
 
+const allListings = computed(() => listingsStore.allListings)
 const availableListings = computed(() => listingsStore.availableListings)
 const myListings = computed(() => listingsStore.myListings)
 const requestedListings = computed(() => listingsStore.requestedListings)
+const filteredListings = computed(() => listingsStore.filteredListings)
+
+const isDialogOpen = ref(false)
+const selectedListing = ref<Listing | null>(null)
+
+const openListingDialog = (listing: Listing) => {
+  selectedListing.value = listing
+  isDialogOpen.value = true
+}
+
+const closeListingDialog = () => {
+  isDialogOpen.value = false
+  selectedListing.value = null
+}
+
+const clearAllFilters = () => {
+  listingsStore.clearSearchFilters()
+}
 
 onMounted(() => {
+  categoriesStore.initializeCategories()
   listingsStore.initializeListings()
+  listingsStore.loadSearchFilters()
 })
 </script>
 
@@ -179,6 +222,13 @@ onMounted(() => {
 .empty-state p {
   color: #6b7280;
   margin-bottom: 2rem;
+}
+
+.empty-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
 @media (max-width: 768px) {
