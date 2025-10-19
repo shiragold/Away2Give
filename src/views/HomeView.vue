@@ -5,9 +5,9 @@
         <h1>Give Away, Give Back</h1>
         <p>Connect with your community by giving away items you no longer need and finding treasures from others.</p>
         <div class="hero-actions">
-          <router-link v-if="userStore.isLoggedIn" to="/add-listing" class="btn btn-primary">
+          <button v-if="userStore.isLoggedIn" @click="openAddListingDialog" class="btn btn-primary">
             Add Your Listing
-          </router-link>
+          </button>
           <router-link v-else to="/login" class="btn btn-primary">
             Get Started
           </router-link>
@@ -42,15 +42,15 @@
             <button @click="clearAllFilters" class="btn btn-outline">
               Clear Filters
             </button>
-            <router-link v-if="userStore.isLoggedIn" to="/add-listing" class="btn btn-primary">
+            <button v-if="userStore.isLoggedIn" @click="openAddListingDialog" class="btn btn-primary">
               Add Listing
-            </router-link>
+            </button>
           </div>
         </div>
         <div v-else class="listings-grid grid grid-3">
           <ListingCard 
-            v-for="listing in filteredListings" 
-            :key="listing.id" 
+            v-for="(listing, i) in filteredListings" 
+            :key="listing.id"
             :listing="listing"
             @open-dialog="openListingDialog"
           />
@@ -76,6 +76,13 @@
       :listing="selectedListing"
       @close="closeListingDialog"
     />
+    
+    <!-- Add Listing Dialog -->
+    <AddListingDialog 
+      :is-open="isAddListingDialogOpen"
+      @close="closeAddListingDialog"
+      @listing-created="handleListingCreated"
+    />
   </div>
 </template>
 
@@ -87,6 +94,7 @@ import { useCategoriesStore } from '@/stores/categories'
 import ListingCard from '@/components/ListingCard.vue'
 import ListingDialog from '@/components/ListingDialog.vue'
 import SearchPanel from '@/components/SearchPanel.vue'
+import AddListingDialog from '@/components/AddListingDialog.vue'
 import type { Listing } from '@/types'
 
 const listingsStore = useListingsStore()
@@ -101,6 +109,7 @@ const filteredListings = computed(() => listingsStore.filteredListings)
 
 const isDialogOpen = ref(false)
 const selectedListing = ref<Listing | null>(null)
+const isAddListingDialogOpen = ref(false)
 
 const openListingDialog = (listing: Listing) => {
   selectedListing.value = listing
@@ -114,6 +123,20 @@ const closeListingDialog = () => {
 
 const clearAllFilters = () => {
   listingsStore.clearSearchFilters()
+}
+
+const openAddListingDialog = () => {
+  isAddListingDialogOpen.value = true
+}
+
+const closeAddListingDialog = () => {
+  isAddListingDialogOpen.value = false
+}
+
+const handleListingCreated = (newListing: Listing) => {
+  // Optionally show a success message or perform other actions
+  console.log('New listing created:', newListing)
+  // The listing is already added to the store by the dialog
 }
 
 onMounted(() => {
