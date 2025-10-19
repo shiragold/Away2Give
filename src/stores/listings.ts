@@ -168,7 +168,7 @@ export const useListingsStore = defineStore('listings', () => {
       }
     } else {
       // Load sample data if no saved listings
-      listings.value = [...sampleListings]
+      listings.value = sampleListings.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
       saveListings()
     }
   }
