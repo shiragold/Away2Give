@@ -212,6 +212,9 @@ const openDialog = () => {
   font-weight: 600;
   margin-bottom: 0.5rem;
   color: #1f2937;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .listing-description {
@@ -232,6 +235,9 @@ const openDialog = () => {
   font-size: 0.875rem;
   color: #374151;
   margin-bottom: 0.25rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .listing-date {

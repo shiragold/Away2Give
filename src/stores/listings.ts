@@ -195,7 +195,7 @@ export const useListingsStore = defineStore('listings', () => {
       // Extract city from address (assuming format like "Street, City" or "City, Country")
       const addressParts = user.address.split(',')
       if (addressParts.length >= 2) {
-        const city = addressParts[addressParts.length - 2].trim()
+        const city = addressParts[addressParts.length - 1].trim()
         if (city) cities.add(city)
       }
     })
