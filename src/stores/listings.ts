@@ -2,11 +2,13 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { Listing, CreateListingData } from '@/types'
 import { useUserStore } from './user'
+import { useCategoriesStore } from './categories'
 import { sampleListings, sampleUsers } from './sample-data'
 
 export const useListingsStore = defineStore('listings', () => {
   const listings = ref<Listing[]>([])
   const userStore = useUserStore()
+  const categoriesStore = useCategoriesStore()
 
   // Search state
   const searchFilters = ref({
@@ -15,6 +17,12 @@ export const useListingsStore = defineStore('listings', () => {
     city: '',
     status: '',
     searchText: ''
+  })
+
+  // Sort state
+  const sortOptions = ref({
+    property: 'published',
+    order: 'asc' as 'asc' | 'desc'
   })
 
   const allListings = computed(() => {
@@ -74,10 +82,36 @@ export const useListingsStore = defineStore('listings', () => {
       )
     }
 
-    // Sort by relevancy: available first, then booked, then taken
+    // Apply sorting
     return filtered.sort((a, b) => {
-      const statusOrder = { 'available': 0, 'booked': 1, 'taken': 2 }
-      return statusOrder[a.status] - statusOrder[b.status]
+      let comparison = 0
+
+      switch (sortOptions.value.property) {
+        case 'published':
+          comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          break
+        case 'address':
+          const userA = sampleUsers.find(u => u.id === a.userId)
+          const userB = sampleUsers.find(u => u.id === b.userId)
+          const addressA = userA?.address || ''
+          const addressB = userB?.address || ''
+          comparison = addressA.localeCompare(addressB)
+          break
+        case 'category':
+          const categoryA = categoriesStore.getCategoryName(a.categoryId)
+          const categoryB = categoriesStore.getCategoryName(b.categoryId)
+          comparison = categoryA.localeCompare(categoryB)
+          break
+        case 'availability':
+          const statusOrder = { 'available': 0, 'booked': 1, 'taken': 2 }
+          comparison = statusOrder[a.status] - statusOrder[b.status]
+          break
+        default:
+          // Default to published date
+          comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      }
+
+      return sortOptions.value.order === 'desc' ? -comparison : comparison
     })
   })
 
@@ -241,6 +275,28 @@ export const useListingsStore = defineStore('listings', () => {
     }
   }
 
+  // Sort management functions
+  const updateSortOptions = (property: string, order: 'asc' | 'desc') => {
+    sortOptions.value = { property, order }
+    saveSortOptions()
+  }
+
+  const saveSortOptions = () => {
+    localStorage.setItem('giveaway-sort-options', JSON.stringify(sortOptions.value))
+  }
+
+  const loadSortOptions = () => {
+    const saved = localStorage.getItem('giveaway-sort-options')
+    if (saved) {
+      try {
+        sortOptions.value = JSON.parse(saved)
+      } catch (error) {
+        console.error('Error parsing saved sort options:', error)
+        localStorage.removeItem('giveaway-sort-options')
+      }
+    }
+  }
+
   return {
     listings,
     allListings,
@@ -249,6 +305,7 @@ export const useListingsStore = defineStore('listings', () => {
     requestedListings,
     filteredListings,
     searchFilters,
+    sortOptions,
     getUniquePublishers,
     getUniqueCities,
     getStatusOptions,
@@ -259,6 +316,8 @@ export const useListingsStore = defineStore('listings', () => {
     updateSearchFilter,
     clearSearchFilters,
     loadSearchFilters,
+    updateSortOptions,
+    loadSortOptions,
     initializeListings
   }
 })

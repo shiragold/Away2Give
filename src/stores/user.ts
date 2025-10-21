@@ -1,10 +1,14 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { User, UpdateUserData } from '@/types'
+import { sampleUsers } from '@/stores/sample-data'
 
 export const useUserStore = defineStore('user', () => {
   const currentUser = ref<User | null>(null)
   const isLoggedIn = computed(() => currentUser.value !== null)
+  
+  // Implementation selection for different code versions
+  const bad = ref(0)
 
   const login = (user: User) => {
     currentUser.value = user
@@ -46,13 +50,27 @@ export const useUserStore = defineStore('user', () => {
     return !!(currentUser.value.name && currentUser.value.email && currentUser.value.address && currentUser.value.phone)
   })
 
+  const allUsers = computed(() => {
+    if (currentUser.value) {
+      sampleUsers.unshift(currentUser.value)
+    }
+    return sampleUsers
+  })
+
+  const setImplementation = (value: number) => {
+    bad.value = value
+  }
+
   return {
     currentUser,
     isLoggedIn,
     hasCompleteProfile,
+    bad,
     login,
     logout,
     updateUser,
-    initializeUser
+    initializeUser,
+    allUsers,
+    setImplementation
   }
 })

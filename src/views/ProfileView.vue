@@ -129,7 +129,6 @@ import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useListingsStore } from '@/stores/listings'
 import { useCategoriesStore } from '@/stores/categories'
-import { sampleUsers } from '@/stores/sample-data'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -155,7 +154,7 @@ const givenAwayCount = computed(() => {
 })
 
 const getUserAddress = (userId: string) => {
-  const user = sampleUsers.find(u => u.id === userId)
+  const user = userStore.allUsers.find(u => u.id === userId)
   return user?.address || 'Address not available'
 }
 

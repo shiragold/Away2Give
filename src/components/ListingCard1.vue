@@ -11,7 +11,7 @@
       <div class="listing-meta">
         <p class="listing-address">📍 {{ userAddress }}</p>
         <div class="category-tag" :style="{ borderColor: categoryColor, color: categoryColor }">
-          {{ categoryName }}
+          {{ categoryName }} {{ bad === 1? `(${categoryCount})` : ''}}
         </div>
       </div>
       <div class="listing-actions">
@@ -51,7 +51,8 @@ import { useCategoriesStore } from '@/stores/categories'
 import type { Listing } from '@/types'
 
 interface Props {
-  listing: Listing
+  listing: Listing,
+  listings?: Listing[]
 }
 
 const props = defineProps<Props>()
@@ -60,7 +61,7 @@ const emit = defineEmits<{
 }>()
 
 onUpdated(() => {
-  console.log('ListingCard-Updated')
+  
 })
 
 const router = useRouter()
@@ -84,6 +85,13 @@ const category = computed(() => {
 
 const categoryName = computed(() => {
   return category.value?.name || 'Uncategorized'
+})
+
+const categoryCount = computed(() => {
+  console.log('ListingCard-categoryCount', categoryCount.value)
+  if (bad.value !== 1) return null
+  console.log('ListingCard-computed-categoryCount')
+  return props.listings?.filter(l => l.categoryId === props.listing.categoryId).length
 })
 
 const categoryColor = computed(() => {
