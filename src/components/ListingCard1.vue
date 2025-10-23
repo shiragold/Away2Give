@@ -11,7 +11,7 @@
       <div class="listing-meta">
         <p class="listing-address">📍 {{ userAddress }}</p>
         <div class="category-tag" :style="{ borderColor: categoryColor, color: categoryColor }">
-          {{ categoryName }} {{ bad === 1? `(${categoryCount})` : ''}}
+          {{ categoryName }} ({{categoryCount}})
         </div>
       </div>
       <div class="listing-actions">
@@ -52,7 +52,7 @@ import type { Listing } from '@/types'
 
 interface Props {
   listing: Listing,
-  listings?: Listing[]
+  listings: Listing[]
 }
 
 const props = defineProps<Props>()
@@ -61,7 +61,7 @@ const emit = defineEmits<{
 }>()
 
 onUpdated(() => {
-  
+  console.log('ListingCard-onUpdated')
 })
 
 const router = useRouter()
@@ -71,8 +71,6 @@ const categoriesStore = useCategoriesStore()
 
 const isRequesting = ref(false)
 const isMarkingAsGiven = ref(false)
-
-const bad = computed(() => userStore.bad)
 
 const userAddress = computed(() => {
   const user = userStore.allUsers.find(u => u.id === props.listing.userId)
@@ -88,8 +86,6 @@ const categoryName = computed(() => {
 })
 
 const categoryCount = computed(() => {
-  console.log('ListingCard-categoryCount', categoryCount.value)
-  if (bad.value !== 1) return null
   console.log('ListingCard-computed-categoryCount')
   return props.listings?.filter(l => l.categoryId === props.listing.categoryId).length
 })

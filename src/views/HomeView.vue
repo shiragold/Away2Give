@@ -41,8 +41,9 @@ import { computed, onMounted, ref } from 'vue'
 import { useListingsStore } from '@/stores/listings'
 import { useUserStore } from '@/stores/user'
 import { useCategoriesStore } from '@/stores/categories'
-import ListingsSection from '@/components/ListingsSection.vue'
+import ListingsSection from '@/components/ListingsSection0.vue'
 import ListingsSection1 from '@/components/ListingsSection1.vue'
+import ListingsSection2 from '@/components/ListingsSection2.vue'
 
 const listingsStore = useListingsStore()
 const userStore = useUserStore()
@@ -58,6 +59,8 @@ const listingsSectionComponent = computed(() => {
   switch (bad.value) {
     case 1:
       return ListingsSection1
+    case 2:
+      return ListingsSection2
     default:
       return ListingsSection
   }
