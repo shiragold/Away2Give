@@ -63,8 +63,7 @@ const isLoggedIn = computed(() => userStore.isLoggedIn)
 
 const listingsStore = useListingsStore()
 const filteredListings = computed(() => listingsStore.filteredListings)
-const allListings = computed((prevAllListings: Listing[] = []) => {
-  if (prevAllListings.length === listingsStore.allListings.length) return prevAllListings
+const allListings = computed(() => {
   return listingsStore.allListings
 })
 
