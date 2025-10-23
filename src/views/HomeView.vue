@@ -44,6 +44,7 @@ import { useCategoriesStore } from '@/stores/categories'
 import ListingsSection from '@/components/ListingsSection0.vue'
 import ListingsSection1 from '@/components/ListingsSection1.vue'
 import ListingsSection2 from '@/components/ListingsSection2.vue'
+import ListingsSection3 from '@/components/ListingsSection3.vue'
 
 const listingsStore = useListingsStore()
 const userStore = useUserStore()
@@ -61,6 +62,8 @@ const listingsSectionComponent = computed(() => {
       return ListingsSection1
     case 2:
       return ListingsSection2
+    case 3:
+      return ListingsSection3
     default:
       return ListingsSection
   }
@@ -73,7 +76,7 @@ const openAddListingDialog = () => {
 onMounted(() => {
   categoriesStore.initializeCategories()
   listingsStore.initializeListings()
-  listingsStore.loadSearchFilters()
+  listingsStore.loadSearchOptions()
   listingsStore.loadSortOptions()
 })
 </script>
