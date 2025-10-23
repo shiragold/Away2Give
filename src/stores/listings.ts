@@ -11,12 +11,14 @@ export const useListingsStore = defineStore('listings', () => {
   const categoriesStore = useCategoriesStore()
 
   // Search state
-  const searchFilters = ref({
-    categoryId: '',
-    publisherId: '',
-    city: '',
-    status: '',
-    searchText: ''
+  const searchOptions = ref({
+    searchText: '',
+    searchFilters: {
+      categoryId: '',
+      publisherId: '',
+      city: '',
+      status: '',
+    }
   })
 
   // Sort state
@@ -49,33 +51,33 @@ export const useListingsStore = defineStore('listings', () => {
 
   const filteredListings = computed(() => {
     let filtered = [...listings.value]
-
+    const filters = searchOptions.value.searchFilters
     // Filter by category
-    if (searchFilters.value.categoryId) {
-      filtered = filtered.filter(listing => listing.categoryId === searchFilters.value.categoryId)
+    if (filters.categoryId) {
+      filtered = filtered.filter(listing => listing.categoryId === filters.categoryId)
     }
 
     // Filter by publisher
-    if (searchFilters.value.publisherId) {
-      filtered = filtered.filter(listing => listing.userId === searchFilters.value.publisherId)
+    if (filters.publisherId) {
+      filtered = filtered.filter(listing => listing.userId === filters.publisherId)
     }
 
     // Filter by city
-    if (searchFilters.value.city) {
+    if (filters.city) {
       filtered = filtered.filter(listing => {
         const user = sampleUsers.find(u => u.id === listing.userId)
-        return user?.address.toLowerCase().includes(searchFilters.value.city.toLowerCase())
+        return user?.address.toLowerCase().includes(filters.city.toLowerCase())
       })
     }
 
     // Filter by status
-    if (searchFilters.value.status) {
-      filtered = filtered.filter(listing => listing.status === searchFilters.value.status)
+    if (filters.status) {
+      filtered = filtered.filter(listing => listing.status === filters.status)
     }
 
     // Filter by search text
-    if (searchFilters.value.searchText) {
-      const searchLower = searchFilters.value.searchText.toLowerCase()
+    if (searchOptions.value.searchText) {
+      const searchLower = searchOptions.value.searchText.toLowerCase()
       filtered = filtered.filter(listing => 
         listing.title.toLowerCase().includes(searchLower) ||
         listing.description.toLowerCase().includes(searchLower)
@@ -243,34 +245,42 @@ export const useListingsStore = defineStore('listings', () => {
   ])
 
   // Search management functions
-  const updateSearchFilter = (key: keyof typeof searchFilters.value, value: string) => {
-    searchFilters.value[key] = value
-    saveSearchFilters()
+  const updateSearchFilter = (key: keyof typeof searchOptions.value.searchFilters, value: string) => {
+    searchOptions.value.searchFilters[key] = value
+    saveSearchOptions()
   }
 
-  const clearSearchFilters = () => {
-    searchFilters.value = {
+  const updateSearchText = (value: string) => {
+    searchOptions.value = {
+      ...searchOptions.value,
+      searchText: value
+    }
+    saveSearchOptions()
+  }
+
+  const clearSearchOptions = () => {
+    searchOptions.value.searchFilters = {
       categoryId: '',
       publisherId: '',
       city: '',
-      status: '',
-      searchText: ''
+      status: ''
     }
-    saveSearchFilters()
+    searchOptions.value.searchText = ''
+    saveSearchOptions()
   }
 
-  const saveSearchFilters = () => {
-    localStorage.setItem('giveaway-search-filters', JSON.stringify(searchFilters.value))
+  const saveSearchOptions = () => {
+    localStorage.setItem('giveaway-search', JSON.stringify(searchOptions.value))
   }
 
-  const loadSearchFilters = () => {
-    const saved = localStorage.getItem('giveaway-search-filters')
+  const loadSearchOptions = () => {
+    const saved = localStorage.getItem('giveaway-search')
     if (saved) {
       try {
-        searchFilters.value = JSON.parse(saved)
+        searchOptions.value = JSON.parse(saved)
       } catch (error) {
         console.error('Error parsing saved search filters:', error)
-        localStorage.removeItem('giveaway-search-filters')
+        localStorage.removeItem('giveaway-search')
       }
     }
   }
@@ -282,17 +292,17 @@ export const useListingsStore = defineStore('listings', () => {
   }
 
   const saveSortOptions = () => {
-    localStorage.setItem('giveaway-sort-options', JSON.stringify(sortOptions.value))
+    localStorage.setItem('giveaway-sort', JSON.stringify(sortOptions.value))
   }
 
   const loadSortOptions = () => {
-    const saved = localStorage.getItem('giveaway-sort-options')
+    const saved = localStorage.getItem('giveaway-sort')
     if (saved) {
       try {
         sortOptions.value = JSON.parse(saved)
       } catch (error) {
         console.error('Error parsing saved sort options:', error)
-        localStorage.removeItem('giveaway-sort-options')
+        localStorage.removeItem('giveaway-sort')
       }
     }
   }
@@ -304,7 +314,7 @@ export const useListingsStore = defineStore('listings', () => {
     myListings,
     requestedListings,
     filteredListings,
-    searchFilters,
+    searchOptions,
     sortOptions,
     getUniquePublishers,
     getUniqueCities,
@@ -314,8 +324,9 @@ export const useListingsStore = defineStore('listings', () => {
     markAsGiven,
     getListingById,
     updateSearchFilter,
-    clearSearchFilters,
-    loadSearchFilters,
+    updateSearchText,
+    clearSearchOptions,
+    loadSearchOptions,
     updateSortOptions,
     loadSortOptions,
     initializeListings

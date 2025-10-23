@@ -21,7 +21,7 @@
             type="text"
             class="filter-input"
             placeholder="Search by title or description..."
-            @input="updateFilter('searchText', $event.target.value)"
+            @input="updateSearchText($event.target.value)"
           />
         </div>
         
@@ -31,7 +31,7 @@
             id="category-filter"
             v-model="categoryId"
             class="filter-select"
-            @change="updateFilter('categoryId', $event.target.value)"
+            @change="updateSearchFilter('categoryId', $event.target.value)"
           >
             <option value="">All Categories</option>
             <option 
@@ -52,7 +52,7 @@
             id="publisher-filter"
             v-model="publisherId"
             class="filter-select"
-            @change="updateFilter('publisherId', $event.target.value)"
+            @change="updateSearchFilter('publisherId', $event.target.value)"
           >
             <option value="">All Publishers</option>
             <option 
@@ -71,7 +71,7 @@
             id="city-filter"
             v-model="city"
             class="filter-select"
-            @change="updateFilter('city', $event.target.value)"
+            @change="updateSearchFilter('city', $event.target.value)"
           >
             <option value="">All Cities</option>
             <option 
@@ -92,7 +92,7 @@
             id="status-filter"
             v-model="status"
             class="filter-select"
-            @change="updateFilter('status', $event.target.value)"
+            @change="updateSearchFilter('status', $event.target.value)"
           >
             <option value="">All Statuses</option>
             <option 
@@ -142,17 +142,21 @@ const hasActiveFilters = computed(() => {
 })
 
 // Watch for changes in store filters and update local refs
-watch(() => listingsStore.searchFilters, (newFilters) => {
-  searchText.value = newFilters.searchText
-  categoryId.value = newFilters.categoryId
-  publisherId.value = newFilters.publisherId
-  city.value = newFilters.city
-  status.value = newFilters.status
+watch(() => listingsStore.searchOptions, (newSearchOptions) => {
+  searchText.value = newSearchOptions.searchText
+  categoryId.value = newSearchOptions.searchFilters.categoryId
+  publisherId.value = newSearchOptions.searchFilters.publisherId
+  city.value = newSearchOptions.searchFilters.city
+  status.value = newSearchOptions.searchFilters.status
 }, { immediate: true })
 
 // Methods
-const updateFilter = (key: string, value: string) => {
-  listingsStore.updateSearchFilter(key as keyof typeof listingsStore.searchFilters, value)
+const updateSearchFilter = (key: string, value: string) => {
+  listingsStore.updateSearchFilter(key as keyof typeof listingsStore.searchOptions.searchFilters, value)
+}
+
+const updateSearchText = (value: string) => {
+  listingsStore.updateSearchText(value)
 }
 
 const clearFilters = () => {
@@ -161,7 +165,7 @@ const clearFilters = () => {
   publisherId.value = ''
   city.value = ''
   status.value = ''
-  listingsStore.clearSearchFilters()
+  listingsStore.clearSearchOptions()
 }
 </script>
 
