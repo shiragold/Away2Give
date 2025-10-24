@@ -45,6 +45,7 @@ import ListingsSection from '@/components/ListingsSection0.vue'
 import ListingsSection1 from '@/components/ListingsSection1.vue'
 import ListingsSection2 from '@/components/ListingsSection2.vue'
 import ListingsSection3 from '@/components/ListingsSection3.vue'
+import ListingsSection4 from '@/components/ListingsSection4.vue'
 
 const listingsStore = useListingsStore()
 const userStore = useUserStore()
@@ -64,6 +65,8 @@ const listingsSectionComponent = computed(() => {
       return ListingsSection2
     case 3:
       return ListingsSection3
+    case 4:
+      return ListingsSection4
     default:
       return ListingsSection
   }
