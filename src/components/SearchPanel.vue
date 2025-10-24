@@ -21,7 +21,6 @@
             type="text"
             class="filter-input"
             placeholder="Search by title or description..."
-            @input="updateSearchText($event.target.value)"
           />
         </div>
         
@@ -31,7 +30,6 @@
             id="category-filter"
             v-model="categoryId"
             class="filter-select"
-            @change="updateSearchFilter('categoryId', $event.target.value)"
           >
             <option value="">All Categories</option>
             <option 
@@ -52,7 +50,6 @@
             id="publisher-filter"
             v-model="publisherId"
             class="filter-select"
-            @change="updateSearchFilter('publisherId', $event.target.value)"
           >
             <option value="">All Publishers</option>
             <option 
@@ -71,7 +68,6 @@
             id="city-filter"
             v-model="city"
             class="filter-select"
-            @change="updateSearchFilter('city', $event.target.value)"
           >
             <option value="">All Cities</option>
             <option 
@@ -92,7 +88,6 @@
             id="status-filter"
             v-model="status"
             class="filter-select"
-            @change="updateSearchFilter('status', $event.target.value)"
           >
             <option value="">All Statuses</option>
             <option 
@@ -117,20 +112,39 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed } from 'vue'
 import { useListingsStore } from '@/stores/listings'
 import { useCategoriesStore } from '@/stores/categories'
 
 const listingsStore = useListingsStore()
 const categoriesStore = useCategoriesStore()
 
-const searchText = ref('')
-const categoryId = ref('')
-const publisherId = ref('')
-const city = ref('')
-const status = ref('')
+// Computed properties with getters and setters
+const searchText = computed({
+  get: () => listingsStore.searchOptions.searchText,
+  set: (value: string) => listingsStore.updateSearchText(value)
+})
 
-// Computed properties
+const categoryId = computed({
+  get: () => listingsStore.searchOptions.searchFilters.categoryId,
+  set: (value: string) => listingsStore.updateSearchFilter('categoryId', value)
+})
+
+const publisherId = computed({
+  get: () => listingsStore.searchOptions.searchFilters.publisherId,
+  set: (value: string) => listingsStore.updateSearchFilter('publisherId', value)
+})
+
+const city = computed({
+  get: () => listingsStore.searchOptions.searchFilters.city,
+  set: (value: string) => listingsStore.updateSearchFilter('city', value)
+})
+
+const status = computed({
+  get: () => listingsStore.searchOptions.searchFilters.status,
+  set: (value: string) => listingsStore.updateSearchFilter('status', value)
+})
+
 const categories = computed(() => categoriesStore.allCategories)
 const publishers = computed(() => listingsStore.getUniquePublishers)
 const cities = computed(() => listingsStore.getUniqueCities)
@@ -141,30 +155,7 @@ const hasActiveFilters = computed(() => {
   return searchText.value || categoryId.value || publisherId.value || city.value || status.value
 })
 
-// Watch for changes in store filters and update local refs
-watch(() => listingsStore.searchOptions, (newSearchOptions) => {
-  searchText.value = newSearchOptions.searchText
-  categoryId.value = newSearchOptions.searchFilters.categoryId
-  publisherId.value = newSearchOptions.searchFilters.publisherId
-  city.value = newSearchOptions.searchFilters.city
-  status.value = newSearchOptions.searchFilters.status
-}, { immediate: true })
-
-// Methods
-const updateSearchFilter = (key: string, value: string) => {
-  listingsStore.updateSearchFilter(key as keyof typeof listingsStore.searchOptions.searchFilters, value)
-}
-
-const updateSearchText = (value: string) => {
-  listingsStore.updateSearchText(value)
-}
-
 const clearFilters = () => {
-  searchText.value = ''
-  categoryId.value = ''
-  publisherId.value = ''
-  city.value = ''
-  status.value = ''
   listingsStore.clearSearchOptions()
 }
 </script>
