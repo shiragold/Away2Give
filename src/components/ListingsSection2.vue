@@ -22,8 +22,8 @@
         </div>
         <div class="listings-grid grid grid-3">
           <ListingCard
-            v-for="(listing, index) in filteredListings" 
-            :key="index"
+            v-for="listing in filteredListings" 
+            :key="listing.id"
             :listing="listing"
             :category-count="countCategoryListings[listing.categoryId] || 0"
             @open-dialog="handleOpenDialog"
