@@ -49,7 +49,7 @@ import type { Listing } from '@/types'
 
 interface Props {
   title: string
-  listingsFunc: () => Listing[]
+  listings: Listing[]
 }
 
 const props = defineProps<Props>()
@@ -61,7 +61,6 @@ const emit = defineEmits<{
 const triggerRef = ref<HTMLElement | null>(null)
 const isVisible = ref(false)
 const popoverPosition = ref({ top: 0, left: 0 })
-const listings = ref<Listing[]>([])
 let hideTimeout: ReturnType<typeof setTimeout> | null = null
 
 const popoverStyle = computed(() => ({
@@ -84,7 +83,6 @@ const handleMouseEnter = () => {
       left: rect.left + window.scrollX
     }
   }
-  listings.value = props.listingsFunc()
   isVisible.value = true
 }
 
