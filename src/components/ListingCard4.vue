@@ -75,7 +75,7 @@ import { useRouter } from 'vue-router'
 import { useListingsStore } from '@/stores/listings'
 import { useUserStore } from '@/stores/user'
 import { useCategoriesStore } from '@/stores/categories'
-import ListingPopover from '@/components/ListingPopover.vue'
+import ListingPopover from '@/components/MoreListingsPopover.vue'
 import type { Listing } from '@/types'
 
 interface Props {
@@ -99,18 +99,29 @@ const categoriesStore = useCategoriesStore()
 
 const isRequesting = ref(false)
 const isMarkingAsGiven = ref(false)
+const otherListings = props.listings.filter(l => l.id !== props.listing.id)
 
 const findUser = (userId: string) => userStore.allUsers.find(u => u.id === userId);
 
 const hoverInfo = computed(() => {
-  console.log("ListingCard-hoverInfo")
-  const otherListings = props.listings.filter(l => l.id !== props.listing.id)
+  console.log("ListingCard-hoverInfo");
   return {
-    title: otherListings.filter(l => l.title === props.listing.title),
-    category: otherListings.filter(l => l.categoryId === props.listing.categoryId),
-    address: otherListings.filter(l => findUser(l.userId)?.address === userAddress.value),
+    title: getHoverInfoTitle(),
+    category: getHoverInfoCategory(),
+    address: getHoverInfoAddress(),
   }
 })
+
+const getHoverInfoTitle = () => {
+  const titleFirstWord = props.listing.title.split(' ')[0];
+  return otherListings.filter(l => l.title.split(' ')[0] === titleFirstWord);
+}
+const getHoverInfoCategory = () => {
+  return otherListings.filter(l => l.categoryId === props.listing.categoryId);
+}
+const getHoverInfoAddress = () => {
+  return otherListings.filter(l => findUser(l.userId)?.address === userAddress.value);
+}
 
 const userAddress = computed(() => {
   const user = findUser(props.listing.userId)
