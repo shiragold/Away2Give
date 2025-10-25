@@ -1,14 +1,14 @@
 <template>
   <div 
-    class="popover-wrapper"
+    ref="triggerRef"
+    class="popover-trigger"
     @mouseenter="handleMouseEnter"
     @mouseleave="handleMouseLeave"
   >
-    <div ref="triggerRef" class="popover-trigger">
-      <slot />
-    </div>
-    
-    <Teleport to="body">
+    <slot />
+  </div>
+  
+  <Teleport to="body">
       <div 
         v-if="isVisible && listings.length > 0"
         class="popover"
@@ -40,8 +40,7 @@
           </div>
         </div>
       </div>
-    </Teleport>
-  </div>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -50,7 +49,7 @@ import type { Listing } from '@/types'
 
 interface Props {
   title: string
-  listings: Listing[]
+  listingsFunc: () => Listing[]
 }
 
 const props = defineProps<Props>()
@@ -62,6 +61,8 @@ const emit = defineEmits<{
 const triggerRef = ref<HTMLElement | null>(null)
 const isVisible = ref(false)
 const popoverPosition = ref({ top: 0, left: 0 })
+const listings = ref<Listing[]>([])
+let hideTimeout: ReturnType<typeof setTimeout> | null = null
 
 const popoverStyle = computed(() => ({
   top: `${popoverPosition.value.top}px`,
@@ -69,28 +70,35 @@ const popoverStyle = computed(() => ({
 }))
 
 const handleMouseEnter = () => {
+  // Cancel any pending hide
+  if (hideTimeout) {
+    clearTimeout(hideTimeout)
+    hideTimeout = null
+    return;
+  }
+  
   if (triggerRef.value) {
     const rect = triggerRef.value.getBoundingClientRect()
     popoverPosition.value = {
-      top: rect.bottom + window.scrollY + 8,
+      top: rect.bottom + window.scrollY,
       left: rect.left + window.scrollX
     }
   }
+  listings.value = props.listingsFunc()
   isVisible.value = true
 }
 
 const handleMouseLeave = () => {
-  isVisible.value = false
+  // Delay hiding to allow mouse to move to popover
+  hideTimeout = setTimeout(() => {
+    isVisible.value = false
+    hideTimeout = null
+  }, 100)
 }
 </script>
 
 <style scoped>
-.popover-wrapper {
-  display: inline;
-}
-
 .popover-trigger {
-  display: inline;
   cursor: pointer;
 }
 
