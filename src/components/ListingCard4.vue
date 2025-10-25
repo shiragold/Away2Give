@@ -8,7 +8,7 @@
     </div>
     <div class="listing-content">
       <ListingPopover
-        :title="titlePopoverTitle"
+        :title="`More of: ${listing.title}`"
         :listings="hoverInfo.title"
         @item-click="handlePopoverItemClick"
       >
@@ -19,7 +19,7 @@
       
       <div class="listing-meta">
         <ListingPopover
-          :title="addressPopoverTitle"
+          :title="`More from: ${userAddress}`"
           :listings="hoverInfo.address"
           @item-click="handlePopoverItemClick"
         >
@@ -29,7 +29,7 @@
         </ListingPopover>
         
         <ListingPopover
-          :title="categoryPopoverTitle"
+          :title="`More in: ${categoryName}`"
           :listings="hoverInfo.category"
           @item-click="handlePopoverItemClick"
         >
@@ -157,10 +157,6 @@ const canMarkAsGiven = computed(() => {
   return userStore.isLoggedIn && 
          props.listing.userId === userStore.currentUser?.id
 })
-
-const titlePopoverTitle = computed(() => `Similar items: "${props.listing.title}"`)
-const addressPopoverTitle = computed(() => `More from ${userAddress.value}`)
-const categoryPopoverTitle = computed(() => `More in ${categoryName.value}`)
 
 const formatDate = (date: Date) => {
   return new Date(date).toLocaleDateString('en-US', {
