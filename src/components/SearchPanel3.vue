@@ -123,7 +123,7 @@ const categoriesStore = useCategoriesStore()
 const searchText = computed({
   get: () => listingsStore.searchOptions.searchText,
   set: (value: string) => listingsStore.updateSearchOptions({
-    ...listingsStore.searchOptions, searchText: value
+    ...listingsStore.searchOptions, searchFilters: { ...listingsStore.searchOptions.searchFilters }, searchText: value
   })
 })
 
