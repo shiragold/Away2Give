@@ -245,26 +245,27 @@ export const useListingsStore = defineStore('listings', () => {
   ])
 
   // Search management functions
+
+  const updateSearchOptions = (options: typeof searchOptions.value) => {
+    searchOptions.value = options
+    saveSearchOptions()
+  }
+
   const updateSearchFilter = (key: keyof typeof searchOptions.value.searchFilters, value: string) => {
     searchOptions.value.searchFilters[key] = value
     saveSearchOptions()
   }
 
   const updateSearchText = (value: string) => {
-    searchOptions.value = {
-      ...searchOptions.value,
-      searchText: value
-    }
+    searchOptions.value.searchText = value
     saveSearchOptions()
   }
 
   const clearSearchOptions = () => {
-    searchOptions.value.searchFilters = {
-      categoryId: '',
-      publisherId: '',
-      city: '',
-      status: ''
-    }
+    searchOptions.value.searchFilters.categoryId = ''
+    searchOptions.value.searchFilters.publisherId = ''
+    searchOptions.value.searchFilters.city = ''
+    searchOptions.value.searchFilters.status = ''
     searchOptions.value.searchText = ''
     saveSearchOptions()
   }
@@ -323,6 +324,7 @@ export const useListingsStore = defineStore('listings', () => {
     requestListing,
     markAsGiven,
     getListingById,
+    updateSearchOptions,
     updateSearchFilter,
     updateSearchText,
     clearSearchOptions,
