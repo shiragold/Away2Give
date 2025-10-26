@@ -2,18 +2,23 @@
   <div id="app">
     <nav class="navbar">
       <div class="nav-container">
-        <router-link to="/" class="nav-brand">
-          <h1>Away 2 Give</h1>
-        </router-link>
+        <div class="implementation-selector">
+          <label for="implementation-select" class="implementation-label">EX:</label>
+          <select 
+            id="implementation-select"
+            :value="userStore.bad" 
+            @change="handleImplementationChange"
+            class="implementation-select"
+          >
+            <option value="0">0</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+          </select>
+        </div>
         <div class="nav-links">
           <router-link to="/" class="nav-link">Home</router-link>
-          <router-link 
-            v-if="userStore.isLoggedIn" 
-            to="/add-listing" 
-            class="nav-link"
-          >
-            Add Listing
-          </router-link>
           <router-link 
             v-if="userStore.isLoggedIn" 
             to="/profile" 
@@ -64,6 +69,12 @@ const handleLogout = () => {
   userStore.logout()
   router.push('/')
 }
+
+const handleImplementationChange = (event: Event) => {
+  const target = event.target as HTMLSelectElement
+  const value = parseInt(target.value)
+  userStore.setImplementation(value)
+}
 </script>
 
 <style scoped>
@@ -93,6 +104,38 @@ const handleLogout = () => {
   display: flex;
   gap: 1.5rem;
   align-items: center;
+}
+
+.implementation-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: rgba(255, 255, 255, 0.1);
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+}
+
+.implementation-label {
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.implementation-select {
+  background-color: rgba(255, 255, 255, 0.9);
+  border: none;
+  border-radius: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  color: #374151;
+  cursor: pointer;
+  min-width: 2rem;
+}
+
+.implementation-select:focus {
+  outline: none;
+  background-color: white;
 }
 
 .nav-link {

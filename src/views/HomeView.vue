@@ -5,9 +5,9 @@
         <h1>Give Away, Give Back</h1>
         <p>Connect with your community by giving away items you no longer need and finding treasures from others.</p>
         <div class="hero-actions">
-          <router-link v-if="userStore.isLoggedIn" to="/add-listing" class="btn btn-primary">
+          <button v-if="userStore.isLoggedIn" @click="openAddListingDialog" class="btn btn-primary">
             Add Your Listing
-          </router-link>
+          </button>
           <router-link v-else to="/login" class="btn btn-primary">
             Get Started
           </router-link>
@@ -28,54 +28,11 @@
           <p>Items Requested</p>
         </div>
       </div>
-
-      <!-- Search Panel -->
-      <SearchPanel />
-
-      <div class="listings-section">
-        <h2>All Items</h2>
-        <div v-if="filteredListings.length === 0" class="empty-state">
-          <div class="empty-icon">📦</div>
-          <h3>No items found</h3>
-          <p>Try adjusting your search filters or be the first to add a listing!</p>
-          <div class="empty-actions">
-            <button @click="clearAllFilters" class="btn btn-outline">
-              Clear Filters
-            </button>
-            <router-link v-if="userStore.isLoggedIn" to="/add-listing" class="btn btn-primary">
-              Add Listing
-            </router-link>
-          </div>
-        </div>
-        <div v-else class="listings-grid grid grid-3">
-          <ListingCard 
-            v-for="listing in filteredListings" 
-            :key="listing.id" 
-            :listing="listing"
-            @open-dialog="openListingDialog"
-          />
-        </div>
-      </div>
-
-      <div v-if="userStore.isLoggedIn && myListings.length > 0" class="my-listings-section">
-        <h2>My Listings</h2>
-        <div class="listings-grid grid grid-3">
-          <ListingCard 
-            v-for="listing in myListings" 
-            :key="listing.id" 
-            :listing="listing"
-            @open-dialog="openListingDialog"
-          />
-        </div>
-      </div>
+      <component
+        :is="listingsSectionComponent"
+        ref="listingsSectionRef"
+      />
     </div>
-    
-    <!-- Listing Dialog -->
-    <ListingDialog 
-      :is-open="isDialogOpen"
-      :listing="selectedListing"
-      @close="closeListingDialog"
-    />
   </div>
 </template>
 
@@ -84,42 +41,46 @@ import { computed, onMounted, ref } from 'vue'
 import { useListingsStore } from '@/stores/listings'
 import { useUserStore } from '@/stores/user'
 import { useCategoriesStore } from '@/stores/categories'
-import ListingCard from '@/components/ListingCard.vue'
-import ListingDialog from '@/components/ListingDialog.vue'
-import SearchPanel from '@/components/SearchPanel.vue'
-import type { Listing } from '@/types'
+import ListingsSection from '@/components/ListingsSection0.vue'
+import ListingsSection1 from '@/components/ListingsSection1.vue'
+import ListingsSection2 from '@/components/ListingsSection2.vue'
+import ListingsSection3 from '@/components/ListingsSection3.vue'
+import ListingsSection4 from '@/components/ListingsSection4.vue'
 
 const listingsStore = useListingsStore()
 const userStore = useUserStore()
 const categoriesStore = useCategoriesStore()
 
-const allListings = computed(() => listingsStore.allListings)
+const listingsSectionRef = ref<InstanceType<typeof ListingsSection> | null>(null)
+const bad = computed(() => userStore.bad)
 const availableListings = computed(() => listingsStore.availableListings)
 const myListings = computed(() => listingsStore.myListings)
 const requestedListings = computed(() => listingsStore.requestedListings)
-const filteredListings = computed(() => listingsStore.filteredListings)
 
-const isDialogOpen = ref(false)
-const selectedListing = ref<Listing | null>(null)
+const listingsSectionComponent = computed(() => {
+  switch (bad.value) {
+    case 1:
+      return ListingsSection1
+    case 2:
+      return ListingsSection2
+    case 3:
+      return ListingsSection3
+    case 4:
+      return ListingsSection4
+    default:
+      return ListingsSection
+  }
+})
 
-const openListingDialog = (listing: Listing) => {
-  selectedListing.value = listing
-  isDialogOpen.value = true
-}
-
-const closeListingDialog = () => {
-  isDialogOpen.value = false
-  selectedListing.value = null
-}
-
-const clearAllFilters = () => {
-  listingsStore.clearSearchFilters()
+const openAddListingDialog = () => {
+  listingsSectionRef.value?.handleAddListing()
 }
 
 onMounted(() => {
   categoriesStore.initializeCategories()
   listingsStore.initializeListings()
-  listingsStore.loadSearchFilters()
+  listingsStore.loadSearchOptions()
+  listingsStore.loadSortOptions()
 })
 </script>
 
@@ -191,12 +152,21 @@ onMounted(() => {
   margin-bottom: 3rem;
 }
 
+.listings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
 .listings-section h2,
 .my-listings-section h2 {
   font-size: 2rem;
   font-weight: 600;
-  margin-bottom: 2rem;
   color: #1f2937;
+  margin: 0;
 }
 
 .empty-state {

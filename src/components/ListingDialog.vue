@@ -77,7 +77,6 @@ import { useListingsStore } from '@/stores/listings'
 import { useUserStore } from '@/stores/user'
 import { useCategoriesStore } from '@/stores/categories'
 import type { Listing } from '@/types'
-import { sampleUsers } from '@/stores/sample-data'
 
 interface Props {
   isOpen: boolean
@@ -98,7 +97,7 @@ const isMarkingAsGiven = ref(false)
 
 const userAddress = computed(() => {
   if (!props.listing) return 'Address not available'
-  const user = sampleUsers.find(u => u.id === props.listing!.userId)
+  const user = userStore.allUsers.find(u => u.id === props.listing!.userId)
   return user?.address || 'Address not available'
 })
 

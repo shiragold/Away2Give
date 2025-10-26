@@ -7,12 +7,39 @@
       </div>
     </div>
     <div class="listing-content">
-      <h3 class="listing-title">{{ listing.title }}</h3>
+      <ListingPopover
+        :title="`More of: ${listing.title}`"
+        :listings="hoverInfo.title"
+        @item-click="handlePopoverItemClick"
+      >
+        <h3 class="listing-title hoverable">
+          {{ listing.title }}
+        </h3>
+      </ListingPopover>
+      
       <div class="listing-meta">
-        <p class="listing-address">📍 {{ userAddress }}</p>
-        <div class="category-tag" :style="{ borderColor: categoryColor, color: categoryColor }">
-          {{ categoryName }}
-        </div>
+        <ListingPopover
+          :title="`More from: ${userAddress}`"
+          :listings="hoverInfo.address"
+          @item-click="handlePopoverItemClick"
+        >
+          <p class="listing-address hoverable">
+            📍 {{ userAddress }}
+          </p>
+        </ListingPopover>
+        
+        <ListingPopover
+          :title="`More in: ${categoryName}`"
+          :listings="hoverInfo.category"
+          @item-click="handlePopoverItemClick"
+        >
+          <div 
+            class="category-tag hoverable" 
+            :style="{ borderColor: categoryColor, color: categoryColor }"
+          >
+            {{ categoryName }}
+          </div>
+        </ListingPopover>
       </div>
       <div class="listing-actions">
         <button 
@@ -43,22 +70,27 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onUpdated, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useListingsStore } from '@/stores/listings'
 import { useUserStore } from '@/stores/user'
 import { useCategoriesStore } from '@/stores/categories'
+import ListingPopover from '@/components/MoreListingsPopover.vue'
 import type { Listing } from '@/types'
-import { sampleUsers } from '@/stores/sample-data'
 
 interface Props {
   listing: Listing
+  listings: Listing[]
 }
 
 const props = defineProps<Props>()
 const emit = defineEmits<{
   openDialog: [listing: Listing]
 }>()
+
+onUpdated(() => {
+  console.log('ListingCard-onUpdated')
+})
 
 const router = useRouter()
 const listingsStore = useListingsStore()
@@ -67,9 +99,32 @@ const categoriesStore = useCategoriesStore()
 
 const isRequesting = ref(false)
 const isMarkingAsGiven = ref(false)
+const otherListings = props.listings.filter(l => l.id !== props.listing.id)
+
+const findUser = (userId: string) => userStore.allUsers.find(u => u.id === userId);
+
+const hoverInfo = computed(() => {
+  console.log("ListingCard-hoverInfo");
+  return {
+    title: getHoverInfoTitle(),
+    category: getHoverInfoCategory(),
+    address: getHoverInfoAddress(),
+  }
+})
+
+const getHoverInfoTitle = () => {
+  const titleFirstWord = props.listing.title.split(' ')[0];
+  return otherListings.filter(l => l.title.split(' ')[0] === titleFirstWord);
+}
+const getHoverInfoCategory = () => {
+  return otherListings.filter(l => l.categoryId === props.listing.categoryId);
+}
+const getHoverInfoAddress = () => {
+  return otherListings.filter(l => findUser(l.userId)?.address === userAddress.value);
+}
 
 const userAddress = computed(() => {
-  const user = sampleUsers.find(u => u.id === props.listing.userId)
+  const user = findUser(props.listing.userId)
   return user?.address || 'Address not available'
 })
 
@@ -151,6 +206,10 @@ const handleMarkAsGiven = async () => {
 
 const openDialog = () => {
   emit('openDialog', props.listing)
+}
+
+const handlePopoverItemClick = (listing: Listing) => {
+  emit('openDialog', listing)
 }
 </script>
 
@@ -266,5 +325,24 @@ const openDialog = () => {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-top: 0.5rem;
+}
+
+/* Hoverable elements */
+.hoverable {
+  transition: all 0.2s ease;
+}
+
+.listing-title.hoverable:hover {
+  color: #667eea;
+  text-decoration: underline;
+}
+
+.listing-address.hoverable:hover {
+  color: #667eea;
+}
+
+.category-tag.hoverable:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 </style>

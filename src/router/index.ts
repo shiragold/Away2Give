@@ -1,7 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '@/views/HomeView.vue'
-import ListingDetailView from '@/views/ListingDetailView.vue'
-import AddListingView from '@/views/AddListingView.vue'
 import ProfileView from '@/views/ProfileView.vue'
 import LoginView from '@/views/LoginView.vue'
 import { useUserStore } from '@/stores/user'
@@ -13,18 +11,6 @@ const router = createRouter({
       path: '/',
       name: 'home',
       component: HomeView
-    },
-    {
-      path: '/listing/:id',
-      name: 'listing-detail',
-      component: ListingDetailView,
-      props: true
-    },
-    {
-      path: '/add-listing',
-      name: 'add-listing',
-      component: AddListingView,
-      meta: { requiresAuth: true, requiresProfile: true }
     },
     {
       path: '/profile',

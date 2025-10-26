@@ -7,7 +7,7 @@
         
         <form @submit.prevent="handleSubmit" class="login-form">
           <div class="form-group">
-            <label for="name" class="form-label">Full Name *</label>
+            <label for="name" class="form-label">Full Name</label>
             <input
               id="name"
               v-model="formData.name"
@@ -19,7 +19,7 @@
           </div>
           
           <div class="form-group">
-            <label for="email" class="form-label">Email Address *</label>
+            <label for="email" class="form-label">Email Address</label>
             <input
               id="email"
               v-model="formData.email"
@@ -31,7 +31,7 @@
           </div>
           
           <div class="form-group">
-            <label for="address" class="form-label">Address *</label>
+            <label for="address" class="form-label">Address</label>
             <textarea
               id="address"
               v-model="formData.address"
@@ -42,7 +42,7 @@
           </div>
           
           <div class="form-group">
-            <label for="phone" class="form-label">Phone Number (Optional)</label>
+            <label for="phone" class="form-label">Phone Number</label>
             <input
               id="phone"
               v-model="formData.phone"

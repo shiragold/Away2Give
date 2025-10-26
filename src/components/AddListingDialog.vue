@@ -1,8 +1,12 @@
 <template>
-  <div class="add-listing-view">
-    <div class="container">
-      <div class="form-container">
-        <h1>Add New Listing</h1>
+  <div v-if="isOpen" class="dialog-overlay" @click="closeDialog">
+    <div class="dialog-content" @click.stop>
+      <div class="dialog-header">
+        <h2>Add New Listing</h2>
+        <button @click="closeDialog" class="close-btn">&times;</button>
+      </div>
+      
+      <div class="dialog-body">
         <p class="form-subtitle">Share something you no longer need with your community</p>
         
         <form @submit.prevent="handleSubmit" class="listing-form">
@@ -66,38 +70,45 @@
             </div>
           </div>
           
-          
           <div v-if="error" class="alert alert-error">
             {{ error }}
           </div>
-          
-          <div class="form-actions">
-            <router-link to="/" class="btn btn-outline">
-              Cancel
-            </router-link>
-            <button 
-              type="submit" 
-              class="btn btn-primary"
-              :disabled="isSubmitting || !isFormValid"
-            >
-              {{ isSubmitting ? 'Creating...' : 'Create Listing' }}
-            </button>
-          </div>
         </form>
+      </div>
+      
+      <div class="dialog-actions">
+        <button @click="closeDialog" class="btn btn-outline">
+          Cancel
+        </button>
+        <button 
+          @click="handleSubmit"
+          class="btn btn-primary"
+          :disabled="isSubmitting || !isFormValid"
+        >
+          {{ isSubmitting ? 'Creating...' : 'Create Listing' }}
+        </button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useListingsStore } from '@/stores/listings'
 import { useUserStore } from '@/stores/user'
 import { useCategoriesStore } from '@/stores/categories'
 import PhotoUpload from '@/components/PhotoUpload.vue'
 
-const router = useRouter()
+interface Props {
+  isOpen: boolean
+}
+
+const props = defineProps<Props>()
+const emit = defineEmits<{
+  close: []
+  listingCreated: [listing: any]
+}>()
+
 const listingsStore = useListingsStore()
 const userStore = useUserStore()
 const categoriesStore = useCategoriesStore()
@@ -154,8 +165,9 @@ const handleSubmit = async () => {
       imageFile: null
     }
 
-    // Navigate to the new listing
-    router.push({ name: 'listing-detail', params: { id: newListing.id } })
+    // Emit success event and close dialog
+    emit('listingCreated', newListing)
+    emit('close')
   } catch (err) {
     error.value = 'Failed to create listing. Please try again.'
     console.error('Error creating listing:', err)
@@ -189,97 +201,190 @@ const addNewCategory = async () => {
   }
 }
 
+const closeDialog = () => {
+  // Reset form when closing
+  formData.value = {
+    title: '',
+    description: '',
+    categoryId: '',
+    imageFile: null
+  }
+  error.value = ''
+  showNewCategoryInput.value = false
+  newCategoryName.value = ''
+  emit('close')
+}
+
+// Watch for dialog opening to initialize categories
+watch(() => props.isOpen, (isOpen) => {
+  if (isOpen) {
+    categoriesStore.initializeCategories()
+  }
+})
+
 onMounted(() => {
   categoriesStore.initializeCategories()
 })
 </script>
 
 <style scoped>
-.add-listing-view {
-  padding: 2rem 0;
-  min-height: calc(100vh - 200px);
+.dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
 }
 
-.form-container {
-  max-width: 600px;
-  margin: 0 auto;
+.dialog-content {
   background: white;
-  padding: 3rem;
   border-radius: 16px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 25px rgba(0, 0, 0, 0.1);
 }
 
-.form-container h1 {
-  font-size: 2.5rem;
-  font-weight: 700;
-  text-align: center;
-  margin-bottom: 0.5rem;
+.dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.dialog-header h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
   color: #1f2937;
+  margin: 0;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #6b7280;
+  padding: 0.25rem;
+  line-height: 1;
+}
+
+.close-btn:hover {
+  color: #374151;
+}
+
+.dialog-body {
+  padding: 2rem;
 }
 
 .form-subtitle {
   text-align: center;
   color: #6b7280;
   margin-bottom: 2rem;
-  font-size: 1.1rem;
+  font-size: 1rem;
 }
 
 .listing-form {
-  margin-top: 2rem;
+  margin-top: 1rem;
 }
 
-.form-actions {
-  display: flex;
-  gap: 1rem;
-  justify-content: flex-end;
-  margin-top: 2rem;
+.form-group {
+  margin-bottom: 1.5rem;
 }
 
-.form-actions .btn {
-  min-width: 120px;
+.form-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 0.5rem;
 }
 
-@media (max-width: 768px) {
-  .form-container {
-    padding: 2rem 1rem;
-    margin: 0 1rem;
-  }
-  
-  .form-container h1 {
-    font-size: 2rem;
-  }
-  
-  .form-actions {
-    flex-direction: column;
-  }
-  
-  .form-actions .btn {
-    width: 100%;
-  }
-}
-
-.category-selector {
-  position: relative;
-}
-
+.form-input,
+.form-textarea,
 .form-select {
   width: 100%;
   padding: 0.75rem;
   border: 1px solid #d1d5db;
   border-radius: 0.5rem;
-  background-color: white;
   font-size: 1rem;
   color: #374151;
+  background-color: white;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
+.form-input:focus,
+.form-textarea:focus,
 .form-select:focus {
   outline: none;
   border-color: #667eea;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
+.form-textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.category-selector {
+  position: relative;
+}
+
 .new-category-input {
   margin-top: 0.5rem;
-  width: 100%;
+}
+
+.alert {
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+}
+
+.alert-error {
+  background-color: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.dialog-actions {
+  display: flex;
+  gap: 1rem;
+  padding: 1.5rem 2rem;
+  border-top: 1px solid #e5e7eb;
+  justify-content: flex-end;
+}
+
+.dialog-actions .btn {
+  min-width: 120px;
+}
+
+@media (max-width: 768px) {
+  .dialog-content {
+    margin: 0.5rem;
+    max-height: 95vh;
+  }
+  
+  .dialog-header,
+  .dialog-body,
+  .dialog-actions {
+    padding: 1rem;
+  }
+  
+  .dialog-actions {
+    flex-direction: column;
+  }
+  
+  .dialog-actions .btn {
+    width: 100%;
+  }
 }
 </style>
