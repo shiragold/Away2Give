@@ -83,7 +83,7 @@ const closeListingDialog = () => {
 }
 
 const handleClearFilters = () => {
-  listingsStore.clearSearchFilters()
+  listingsStore.clearSearchOptions()
 }
 
 const handleAddListing = () => {
